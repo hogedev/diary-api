@@ -7,7 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from src.app.api.deps import init_minio
+from src.app.api.deps import init_storage
 from src.app.database import get_db
 from src.app.main import app
 from src.app.models.base import Base
@@ -30,9 +30,9 @@ async def test_session(test_engine) -> AsyncGenerator[AsyncSession]:
 
 
 @pytest.fixture(scope="function")
-def mock_minio():
+def mock_storage():
     mock = MagicMock()
-    mock.ensure_bucket = AsyncMock()
+    mock.ensure_dir = MagicMock()
     mock.upload = AsyncMock()
     mock.get = AsyncMock(return_value=b"\x89PNG\r\n\x1a\n" + b"\x00" * 100)
     mock.delete = AsyncMock()
@@ -41,7 +41,7 @@ def mock_minio():
 
 
 @pytest.fixture(scope="function")
-def client(test_engine, mock_minio) -> Generator[TestClient]:
+def client(test_engine, mock_storage) -> Generator[TestClient]:
     async def override_get_db() -> AsyncGenerator[AsyncSession]:
         session_maker = async_sessionmaker(test_engine, class_=AsyncSession, expire_on_commit=False)
         async with session_maker() as session:
@@ -54,15 +54,15 @@ def client(test_engine, mock_minio) -> Generator[TestClient]:
 
     app.dependency_overrides[get_db] = override_get_db
     with TestClient(app) as c:
-        # lifespan後にモックを差し込む（lifespanが実MinIOを作るため）
-        init_minio(mock_minio)
+        # lifespan後にモックを差し込む（lifespanが実StorageServiceを作るため）
+        init_storage(mock_storage)
         yield c
     app.dependency_overrides.clear()
 
 
 @pytest.fixture
 def sample_image() -> bytes:
-    """1x1 赤ピクセルの最小JPEG"""
+    """100x100 赤ピクセルのJPEG"""
     import io
 
     from PIL import Image

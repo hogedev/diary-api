@@ -3,7 +3,7 @@
 import io
 
 
-def test_get_photo_image(client, sample_image, mock_minio):
+def test_get_photo_image(client, sample_image, mock_storage):
     create_resp = client.post(
         "/api/v1/entries/",
         data={"text": "写真テスト", "entry_date": "2026-04-19"},
@@ -16,7 +16,7 @@ def test_get_photo_image(client, sample_image, mock_minio):
     assert resp.headers["cache-control"] == "public, max-age=31536000, immutable"
 
 
-def test_get_photo_thumb(client, sample_image, mock_minio):
+def test_get_photo_thumb(client, sample_image, mock_storage):
     create_resp = client.post(
         "/api/v1/entries/",
         data={"text": "サムネテスト", "entry_date": "2026-04-19"},
@@ -27,7 +27,7 @@ def test_get_photo_thumb(client, sample_image, mock_minio):
     assert resp.status_code == 200
 
 
-def test_delete_photo(client, sample_image, mock_minio):
+def test_delete_photo(client, sample_image, mock_storage):
     create_resp = client.post(
         "/api/v1/entries/",
         data={"text": "削除テスト", "entry_date": "2026-04-19"},

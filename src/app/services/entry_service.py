@@ -7,13 +7,13 @@ from ..exceptions import NotFoundError
 from ..models.entry import Entry
 from ..repositories.entry_repository import EntryRepository
 from . import photo_service
-from .minio_service import MinioService
+from .storage_service import StorageService
 
 
 class EntryService:
-    def __init__(self, repository: EntryRepository, minio: MinioService):
+    def __init__(self, repository: EntryRepository, storage: StorageService):
         self.repository = repository
-        self.minio = minio
+        self.storage = storage
 
     async def get_paginated(
         self,
@@ -54,9 +54,11 @@ class EntryService:
             photo, original, thumb = photo_service.process_upload(
                 data, upload.filename, upload.content_type, entry_date
             )
-            await self.minio.upload(photo.object_key, original, photo.content_type or "image/jpeg")
+            await self.storage.upload(
+                photo.object_key, original, photo.content_type or "image/jpeg"
+            )
             if thumb and photo.thumb_key:
-                await self.minio.upload(photo.thumb_key, thumb, "image/jpeg")
+                await self.storage.upload(photo.thumb_key, thumb, "image/jpeg")
             photo.entry_id = entry.id
             entry.photos.append(photo)
 
@@ -77,7 +79,7 @@ class EntryService:
             if photo.thumb_key:
                 keys.append(photo.thumb_key)
         if keys:
-            await self.minio.delete_many(keys)
+            await self.storage.delete_many(keys)
         await self.repository.delete(entry)
 
     async def add_photos(self, entry_id: int, photos: list[UploadFile]) -> Entry:
@@ -89,9 +91,11 @@ class EntryService:
             photo, original, thumb = photo_service.process_upload(
                 data, upload.filename, upload.content_type, entry.entry_date
             )
-            await self.minio.upload(photo.object_key, original, photo.content_type or "image/jpeg")
+            await self.storage.upload(
+                photo.object_key, original, photo.content_type or "image/jpeg"
+            )
             if thumb and photo.thumb_key:
-                await self.minio.upload(photo.thumb_key, thumb, "image/jpeg")
+                await self.storage.upload(photo.thumb_key, thumb, "image/jpeg")
             photo.entry_id = entry.id
             entry.photos.append(photo)
         await self.repository.update(entry)
@@ -103,9 +107,9 @@ class EntryService:
         photo = await self.repository.session.get(Photo, photo_id)
         if not photo:
             raise NotFoundError("Photo", photo_id)
-        await self.minio.delete(photo.object_key)
+        await self.storage.delete(photo.object_key)
         if photo.thumb_key:
-            await self.minio.delete(photo.thumb_key)
+            await self.storage.delete(photo.thumb_key)
         await self.repository.session.delete(photo)
 
     async def get_photo_data(self, photo_id: int, thumb: bool = False) -> tuple[bytes, str]:
@@ -116,5 +120,5 @@ class EntryService:
             raise NotFoundError("Photo", photo_id)
         key = photo.thumb_key if thumb and photo.thumb_key else photo.object_key
         ct = "image/jpeg" if thumb and photo.thumb_key else (photo.content_type or "image/jpeg")
-        data = await self.minio.get(key)
+        data = await self.storage.get(key)
         return data, ct

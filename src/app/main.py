@@ -7,12 +7,12 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
 
-from .api.deps import init_minio
+from .api.deps import init_storage
 from .api.v1 import router as api_router
 from .config import settings
 from .exceptions import AppError
 from .middleware.logging import RequestLoggingMiddleware
-from .services.minio_service import MinioService
+from .services.storage_service import StorageService
 
 logger = logging.getLogger(__name__)
 
@@ -32,13 +32,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-    # MinIO 初期化
-    minio = MinioService()
-    init_minio(minio)
-    try:
-        await minio.ensure_bucket()
-    except Exception:
-        logger.warning("MinIO not available at startup, will retry on first request")
+    # ストレージ初期化
+    storage = StorageService()
+    storage.ensure_dir()
+    init_storage(storage)
 
     yield
 
