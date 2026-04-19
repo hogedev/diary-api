@@ -2,6 +2,16 @@
 
 汎用日記API。写真+テキストの個別投稿を日付でグルーピングして管理。
 
+## デプロイ
+
+```bash
+cp .env.example .env
+# JWT_SECRET を変更
+docker compose up -d
+```
+
+`http://localhost:8000/docs` でSwagger UIが開く。
+
 ## 開発
 
 ```bash
