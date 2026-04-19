@@ -42,8 +42,8 @@ steps:
       - /var/run/docker.sock:/var/run/docker.sock
     commands:
       - docker login -u $REGISTRY_USER -p $REGISTRY_PASS gitea.honya.dev
-      - docker build -t gitea.honya.dev/honya-dev/minilog-api:latest .
-      - docker push gitea.honya.dev/honya-dev/minilog-api:latest
+      - docker build -t gitea.honya.dev/honya-dev-minilog/minilog-api:latest .
+      - docker push gitea.honya.dev/honya-dev-minilog/minilog-api:latest
 
   - name: deploy
     image: docker:cli
