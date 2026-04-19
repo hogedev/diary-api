@@ -11,7 +11,7 @@ async def get_photo_image(
     photo_id: int,
     service: EntryServiceDep,
     w: int | None = Query(default=None, description="サムネイル取得時に指定"),
-):
+) -> Response:
     thumb = w is not None and w <= 800
     data, content_type = await service.get_photo_data(photo_id, thumb=thumb)
     return Response(
@@ -22,5 +22,5 @@ async def get_photo_image(
 
 
 @router.delete("/{photo_id}", status_code=204)
-async def delete_photo(photo_id: int, service: EntryServiceDep):
+async def delete_photo(photo_id: int, service: EntryServiceDep) -> None:
     await service.delete_photo(photo_id)

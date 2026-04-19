@@ -1,2 +1,2 @@
-from .entry import Entry  # noqa: F401
-from .photo import Photo  # noqa: F401
+from .entry import Entry as Entry
+from .photo import Photo as Photo
