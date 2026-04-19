@@ -1,0 +1,55 @@
+when:
+  - event: [push, manual]
+    branch: main
+
+clone:
+  git:
+    image: woodpeckerci/plugin-git
+    settings:
+      skip_verify: true
+
+steps:
+  - name: lint
+    image: python:3.13-slim
+    commands:
+      - pip install uv
+      - uv sync --frozen --all-extras
+      - uv run ruff check src/ tests/
+      - uv run ruff format --check src/ tests/
+
+  - name: typecheck
+    image: python:3.13-slim
+    commands:
+      - pip install uv
+      - uv sync --frozen --all-extras
+      - uv run mypy src/ --ignore-missing-imports
+
+  - name: test
+    image: python:3.13-slim
+    commands:
+      - pip install uv
+      - uv sync --frozen --all-extras
+      - uv run pytest tests/ -v --tb=short --cov --cov-fail-under=55
+
+  - name: build-push
+    image: docker:cli
+    environment:
+      REGISTRY_USER:
+        from_secret: gitea_username
+      REGISTRY_PASS:
+        from_secret: gitea_token
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    commands:
+      - docker login -u $REGISTRY_USER -p $REGISTRY_PASS gitea.honya.dev
+      - docker build -t gitea.honya.dev/honya-dev/diary-api:latest .
+      - docker push gitea.honya.dev/honya-dev/diary-api:latest
+
+  - name: deploy
+    image: docker:cli
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /home/honya/diary-api:/home/honya/diary-api
+    commands:
+      - docker compose -f /home/honya/diary-api/docker-compose.yml pull
+      - docker compose -f /home/honya/diary-api/docker-compose.yml up -d --force-recreate

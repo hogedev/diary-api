@@ -1,0 +1,29 @@
+services:
+  api:
+    image: gitea.honya.dev/honya-dev/diary-api:latest
+    container_name: diary-api
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: sqlite+aiosqlite:///data/diary.db
+      TZ: Asia/Tokyo
+    volumes:
+      - /mnt/8TBHDD/SERVICES/diary-api/data:/app/data
+    restart: unless-stopped
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.diary-api.rule=Host(`diary-api.honya.dev`)"
+      - "traefik.http.routers.diary-api.entrypoints=internal"
+      - "traefik.http.services.diary-api.loadbalancer.server.port=8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  traefik:
+    external: true

@@ -1,0 +1,43 @@
+"""写真テスト"""
+
+import io
+
+
+def test_get_photo_image(client, sample_image, mock_minio):
+    create_resp = client.post(
+        "/api/v1/entries/",
+        data={"text": "写真テスト", "entry_date": "2026-04-19"},
+        files=[("photos", ("test.jpg", io.BytesIO(sample_image), "image/jpeg"))],
+    )
+    photo_id = create_resp.json()["photos"][0]["id"]
+    resp = client.get(f"/api/v1/photos/{photo_id}/image")
+    assert resp.status_code == 200
+    assert "image" in resp.headers["content-type"]
+    assert resp.headers["cache-control"] == "public, max-age=31536000, immutable"
+
+
+def test_get_photo_thumb(client, sample_image, mock_minio):
+    create_resp = client.post(
+        "/api/v1/entries/",
+        data={"text": "サムネテスト", "entry_date": "2026-04-19"},
+        files=[("photos", ("test.jpg", io.BytesIO(sample_image), "image/jpeg"))],
+    )
+    photo_id = create_resp.json()["photos"][0]["id"]
+    resp = client.get(f"/api/v1/photos/{photo_id}/image", params={"w": 400})
+    assert resp.status_code == 200
+
+
+def test_delete_photo(client, sample_image, mock_minio):
+    create_resp = client.post(
+        "/api/v1/entries/",
+        data={"text": "削除テスト", "entry_date": "2026-04-19"},
+        files=[("photos", ("test.jpg", io.BytesIO(sample_image), "image/jpeg"))],
+    )
+    photo_id = create_resp.json()["photos"][0]["id"]
+    resp = client.delete(f"/api/v1/photos/{photo_id}")
+    assert resp.status_code == 204
+
+
+def test_get_photo_not_found(client):
+    resp = client.get("/api/v1/photos/9999/image")
+    assert resp.status_code == 404
