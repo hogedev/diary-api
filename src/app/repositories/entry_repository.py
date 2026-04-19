@@ -11,16 +11,23 @@ class EntryRepository(BaseRepository[Entry]):
     def __init__(self, session: AsyncSession):
         super().__init__(session, Entry)
 
+    async def get_by_id_for_user(self, id: int, user_id: int) -> Entry | None:
+        result = await self.session.execute(
+            select(Entry).where(Entry.id == id, Entry.user_id == user_id)
+        )
+        return result.scalar_one_or_none()
+
     async def get_paginated_by_date(
         self,
+        user_id: int,
         *,
         offset: int = 0,
         limit: int = 20,
         date_from: dt.date | None = None,
         date_to: dt.date | None = None,
     ) -> tuple[list[Entry], int]:
-        base = select(Entry)
-        count_base = select(func.count()).select_from(Entry)
+        base = select(Entry).where(Entry.user_id == user_id)
+        count_base = select(func.count()).select_from(Entry).where(Entry.user_id == user_id)
 
         if date_from:
             base = base.where(Entry.entry_date >= date_from)
@@ -39,9 +46,14 @@ class EntryRepository(BaseRepository[Entry]):
         return items, total
 
     async def get_dates(
-        self, *, year: int | None = None, month: int | None = None
+        self, user_id: int, *, year: int | None = None, month: int | None = None
     ) -> list[dt.date]:
-        query = select(Entry.entry_date).distinct().order_by(Entry.entry_date.desc())
+        query = (
+            select(Entry.entry_date)
+            .where(Entry.user_id == user_id)
+            .distinct()
+            .order_by(Entry.entry_date.desc())
+        )
         if year:
             query = query.where(func.strftime("%Y", Entry.entry_date) == str(year))
         if year and month:

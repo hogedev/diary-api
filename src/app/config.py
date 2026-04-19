@@ -5,6 +5,7 @@ class Settings(BaseSettings):
     database_url: str = "sqlite+aiosqlite:///data/diary.db"
     photos_dir: str = "data/photos"
     thumb_max_dimension: int = 800
+    jwt_secret: str = "change-me-in-production"
 
     model_config = {"env_file": ".env"}
 

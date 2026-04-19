@@ -1,6 +1,6 @@
 import datetime as dt
 
-from sqlalchemy import Date, Text
+from sqlalchemy import Date, ForeignKey, Integer, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base, TimestampMixin
@@ -10,6 +10,9 @@ class Entry(TimestampMixin, Base):
     __tablename__ = "entries"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("users.id"), nullable=False, index=True
+    )
     text: Mapped[str | None] = mapped_column(Text, nullable=True)
     entry_date: Mapped[dt.date] = mapped_column(Date, nullable=False, index=True)
 

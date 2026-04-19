@@ -54,10 +54,21 @@ def client(test_engine, mock_storage) -> Generator[TestClient]:
 
     app.dependency_overrides[get_db] = override_get_db
     with TestClient(app) as c:
-        # lifespan後にモックを差し込む（lifespanが実StorageServiceを作るため）
         init_storage(mock_storage)
         yield c
     app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def auth_header(client) -> dict[str, str]:
+    """テスト用ユーザーを作成しAuthorizationヘッダを返す"""
+    resp = client.post(
+        "/api/v1/auth/register",
+        json={"username": "testuser", "password": "testpass"},
+    )
+    assert resp.status_code == 201
+    token = resp.json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}
 
 
 @pytest.fixture
