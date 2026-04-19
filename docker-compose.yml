@@ -1,24 +1,31 @@
 services:
-  api:
-    build: .
-    container_name: diary-api
-    ports:
-      - "${PORT:-8000}:8000"
+  minilog:
+    image: gitea.honya.dev/honya-dev/minilog:latest
+    container_name: minilog
     env_file:
       - path: .env
         required: false
     environment:
       DATABASE_URL: sqlite+aiosqlite:///data/diary.db
       PHOTOS_DIR: data/photos
+      JWT_SECRET: ${JWT_SECRET}
       TZ: Asia/Tokyo
     volumes:
-      - diary-data:/app/data
+      - /mnt/8TBHDD/SERVICES/minilog:/app/data
     restart: unless-stopped
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.minilog.rule=Host(`minilog.honya.dev`)"
+      - "traefik.http.routers.minilog.entrypoints=internal"
+      - "traefik.http.services.minilog.loadbalancer.server.port=8000"
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=5)"]
       interval: 30s
       timeout: 10s
       retries: 3
 
-volumes:
-  diary-data:
+networks:
+  traefik:
+    external: true

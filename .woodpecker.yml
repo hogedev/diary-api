@@ -42,14 +42,14 @@ steps:
       - /var/run/docker.sock:/var/run/docker.sock
     commands:
       - docker login -u $REGISTRY_USER -p $REGISTRY_PASS gitea.honya.dev
-      - docker build -t gitea.honya.dev/honya-dev/diary-api:latest .
-      - docker push gitea.honya.dev/honya-dev/diary-api:latest
+      - docker build -t gitea.honya.dev/honya-dev/minilog:latest .
+      - docker push gitea.honya.dev/honya-dev/minilog:latest
 
   - name: deploy
     image: docker:cli
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - /home/honya/diary-api:/home/honya/diary-api
+      - /home/honya/minilog:/home/honya/minilog
     commands:
-      - docker compose -f /home/honya/diary-api/docker-compose.yml pull
-      - docker compose -f /home/honya/diary-api/docker-compose.yml up -d --force-recreate
+      - docker compose -f /home/honya/minilog/docker-compose.yml pull
+      - docker compose -f /home/honya/minilog/docker-compose.yml up -d --force-recreate

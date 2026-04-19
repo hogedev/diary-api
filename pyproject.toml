@@ -1,7 +1,7 @@
 [project]
-name = "diary-api"
+name = "minilog"
 version = "0.1.0"
-description = "汎用日記API（写真+テキスト、日付グルーピング）"
+description = "APIが使えるミニブログ"
 requires-python = ">=3.13"
 dependencies = [
     "fastapi>=0.115.0",
