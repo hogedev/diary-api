@@ -1,6 +1,6 @@
 import datetime as dt
 
-from sqlalchemy import Date, ForeignKey, Integer, Text
+from sqlalchemy import Boolean, Date, ForeignKey, Integer, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base, TimestampMixin
@@ -15,6 +15,7 @@ class Entry(TimestampMixin, Base):
     )
     text: Mapped[str | None] = mapped_column(Text, nullable=True)
     entry_date: Mapped[dt.date] = mapped_column(Date, nullable=False, index=True)
+    is_public: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     photos: Mapped[list["Photo"]] = relationship(  # type: ignore[name-defined]  # noqa: F821
         back_populates="entry", cascade="all, delete-orphan", lazy="selectin"

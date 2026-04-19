@@ -4,7 +4,7 @@ from sqlalchemy import select
 
 from ...models.user import User
 from ...services.auth_service import create_token, hash_password, verify_password
-from ..deps import DbSession
+from ..deps import CurrentUserId, DbSession
 
 router = APIRouter()
 
@@ -23,6 +23,18 @@ class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     username: str
+    is_public: bool
+
+
+class AccountUpdateRequest(BaseModel):
+    is_public: bool
+
+
+class AccountResponse(BaseModel):
+    username: str
+    is_public: bool
+
+    model_config = {"from_attributes": True}
 
 
 @router.post("/login", response_model=TokenResponse)
@@ -32,7 +44,7 @@ async def login(body: LoginRequest, db: DbSession) -> TokenResponse:
     if not user or not verify_password(body.password, user.hashed_password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
     token = create_token(user)
-    return TokenResponse(access_token=token, username=user.username)
+    return TokenResponse(access_token=token, username=user.username, is_public=user.is_public)
 
 
 @router.post("/register", response_model=TokenResponse, status_code=201)
@@ -45,4 +57,25 @@ async def register(body: RegisterRequest, db: DbSession) -> TokenResponse:
     await db.flush()
     await db.refresh(user)
     token = create_token(user)
-    return TokenResponse(access_token=token, username=user.username)
+    return TokenResponse(access_token=token, username=user.username, is_public=user.is_public)
+
+
+@router.get("/me", response_model=AccountResponse)
+async def get_me(user_id: CurrentUserId, db: DbSession) -> AccountResponse:
+    user = await db.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return AccountResponse.model_validate(user)
+
+
+@router.put("/me", response_model=AccountResponse)
+async def update_me(
+    body: AccountUpdateRequest, user_id: CurrentUserId, db: DbSession
+) -> AccountResponse:
+    user = await db.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.is_public = body.is_public
+    await db.flush()
+    await db.refresh(user)
+    return AccountResponse.model_validate(user)

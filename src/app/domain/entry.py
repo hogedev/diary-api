@@ -6,6 +6,7 @@ from pydantic import BaseModel
 class EntryUpdate(BaseModel):
     text: str | None = None
     entry_date: dt.date | None = None
+    is_public: bool | None = None
 
 
 class PhotoResponse(BaseModel):
@@ -25,6 +26,7 @@ class EntryResponse(BaseModel):
     id: int
     text: str | None
     entry_date: dt.date
+    is_public: bool
     photos: list[PhotoResponse]
     created_at: dt.datetime
     updated_at: dt.datetime
