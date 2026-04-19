@@ -41,7 +41,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
 
 
 app = FastAPI(
-    title="Diary API",
+    title="minilog",
     version="0.1.0",
     docs_url="/docs",
     redoc_url="/redoc",
